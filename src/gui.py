@@ -18,11 +18,12 @@ class TechtrekWindow(arcade.Window):
         arcade.set_background_color((22, 22, 30))
         self.background = arcade.load_texture(str(BACKGROUND_PATH))
         
-        # Track runtime hardware mouse interaction variables
         self.mouse_x = 0
         self.mouse_y = 0
         
-        # Configuration setup for the vertical menu items button panel
+        self.audio_muted = False
+        self.current_state = "MAIN_MENU"  
+        
         self.menu_options = [
             "CONTINUE",
             "NEW GAME",
@@ -32,35 +33,56 @@ class TechtrekWindow(arcade.Window):
             "QUIT"
         ]
         
-        # Dimensions for individual logical button hover bounding zones
+        self.option_options = [
+            "AUDIO: UNMUTED",
+            "BACK"
+        ]
+        
         self.btn_width = 360          
         self.btn_height = 50          
-        
-        # Anchor offset position metrics on the left sidebar column area
         self.btn_left = 75            
         self.start_y_position = 430   
         self.y_spacing = 60           
 
-        # Pre-create static Arcade Text objects to fix the performance warning
+        self.hovered_index = -1
+
+        # Pre-create Main Menu Text
         self.text_objects = []
         for index, option_text in enumerate(self.menu_options):
-            current_btn_bottom = self.start_y_position - (index * self.y_spacing)
             center_x = self.btn_left + (self.btn_width / 2)
+            current_btn_bottom = self.start_y_position - (index * self.y_spacing)
             center_y = current_btn_bottom + (self.btn_height / 2)
             
-            # FIXED: Using x and y instead of start_x and start_y
             text_obj = arcade.Text(
                 option_text,
                 x=center_x,
                 y=center_y,
-                color=(105, 108, 128),  # Idle baseline color
+                color=(105, 108, 128),  
                 font_size=21,
                 font_name="Times New Roman",
                 anchor_x="center",
                 anchor_y="center",
-                bold=False,
             )
             self.text_objects.append(text_obj)
+
+        # Pre-create Options Menu Text
+        self.options_text_objects = []
+        for index, option_text in enumerate(self.option_options):
+            center_x = self.btn_left + (self.btn_width / 2)
+            current_btn_bottom = self.start_y_position - (index * self.y_spacing)
+            center_y = current_btn_bottom + (self.btn_height / 2)
+            
+            text_obj = arcade.Text(
+                option_text,
+                x=center_x,
+                y=center_y,
+                color=(105, 108, 128),  
+                font_size=21,
+                font_name="Times New Roman",
+                anchor_x="center",
+                anchor_y="center",
+            )
+            self.options_text_objects.append(text_obj)
 
     def on_resize(self, width: float, height: float) -> None:
         super().on_resize(width, height)
@@ -69,52 +91,71 @@ class TechtrekWindow(arcade.Window):
         self.mouse_x = x
         self.mouse_y = y
 
-    def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
-        for index, option_text in enumerate(self.menu_options):
+    def on_update(self, delta_time: float) -> None:
+        active_list = self.menu_options if self.current_state == "MAIN_MENU" else self.option_options
+        
+        current_hover = -1
+        for index in range(len(active_list)):
             current_btn_bottom = self.start_y_position - (index * self.y_spacing)
             
-            if (self.btn_left <= x <= (self.btn_left + self.btn_width) and
-                current_btn_bottom <= y <= (current_btn_bottom + self.btn_height)):
+            if (self.btn_left <= self.mouse_x <= (self.btn_left + self.btn_width) and
+                current_btn_bottom <= self.mouse_y <= (current_btn_bottom + self.btn_height)):
+                current_hover = index
+                break
+        
+        self.hovered_index = current_hover
+
+    def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
+        if self.current_state == "MAIN_MENU":
+            for index, option_text in enumerate(self.menu_options):
+                current_btn_bottom = self.start_y_position - (index * self.y_spacing)
                 
-                if option_text == "QUIT":
-                    arcade.exit()  
+                if (self.btn_left <= x <= (self.btn_left + self.btn_width) and
+                    current_btn_bottom <= y <= (current_btn_bottom + self.btn_height)):
+                    
+                    if option_text == "OPTIONS":
+                        self.current_state = "OPTIONS"
+                        self.hovered_index = -1
+                    elif option_text == "QUIT":
+                        arcade.exit()  
+                        
+        elif self.current_state == "OPTIONS":
+            for index, option_text in enumerate(self.option_options):
+                current_btn_bottom = self.start_y_position - (index * self.y_spacing)
+                
+                if (self.btn_left <= x <= (self.btn_left + self.btn_width) and
+                    current_btn_bottom <= y <= (current_btn_bottom + self.btn_height)):
+                    
+                    if index == 0: 
+                        self.audio_muted = not self.audio_muted
+                        new_text = "AUDIO: MUTED" if self.audio_muted else "AUDIO: UNMUTED"
+                        self.options_text_objects[0].text = new_text
+                        
+                    elif option_text == "BACK":
+                        self.current_state = "MAIN_MENU"
+                        self.hovered_index = -1
 
     def on_draw(self) -> None:
         self.clear()
         
-        # 1. Renders background canvas graphic
+        # 1. Background
         arcade.draw_texture_rect(
             self.background,
             LBWH(0, 0, self.width, self.height),
         )
+
+        active_text_list = (
+            self.text_objects if self.current_state == "MAIN_MENU" 
+            else self.options_text_objects
+        )
         
-        # 2. Process math overlays and render pre-cached elements
-        for index, text_obj in enumerate(self.text_objects):
-            current_btn_bottom = self.start_y_position - (index * self.y_spacing)
-            
-            is_hovered = (
-                self.btn_left <= self.mouse_x <= (self.btn_left + self.btn_width) and
-                current_btn_bottom <= self.mouse_y <= (current_btn_bottom + self.btn_height)
-            )
-            
-            center_x = self.btn_left + (self.btn_width / 2)
-            center_y = current_btn_bottom + (self.btn_height / 2)
-            
-            if is_hovered:
-                # Hover box backdrop element rendering
-                arcade.draw_rect_filled(
-                    arcade.XYWH(center_x, center_y, self.btn_width, self.btn_height),
-                    color=(115, 95, 155, 35),  
-                )
-                # Modify existing text properties quickly instead of drawing from scratch
-                text_obj.font_size = 24
+        # 2. Text Overlay (Keeps stable font_size to prevent visual bounding box artifacts)
+        for index, text_obj in enumerate(active_text_list):
+            if index == self.hovered_index:
                 text_obj.color = arcade.color.WHITE
             else:
-                # Revert properties if cursor leaves the box
-                text_obj.font_size = 21
                 text_obj.color = (105, 108, 128)
                 
-            # Efficiently draw our pre-cached text item
             text_obj.draw()
 
 
