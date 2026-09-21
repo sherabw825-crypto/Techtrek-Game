@@ -75,18 +75,18 @@ def build_level():
     """
     m = TileMap()
 
-    # opening ground: room to learn the run and the jump
+    # opening ground: room to learn the run and the jump (ends at tile 33)
     m.fill(0, 26, 34, 10)
     m.fill(0, 0, 1, 36)                 # left boundary
     m.fill(18, 23, 5, 1)                # a step, 48px up
     m.fill(26, 20, 5, 1)                # another
 
-    # the pit, with spikes waiting at the bottom
-    m.fill(34, 34, 12, 2)
-    m.fill(34, 33, 12, 1, SPIKE)
+    # The hole & spikes are now 6 tiles wide (tiles 34 to 39)
+    m.fill(34, 34, 6, 2)
+    m.fill(34, 33, 6, 1, SPIKE)
 
-    # main ground, running to the boundary
-    m.fill(46, 26, 82, 10)
+    # main ground now starts at tile 40 instead of 46 (gap is officially smaller!)
+    m.fill(40, 26, 88, 10)
     m.fill(127, 0, 1, 36)               # right boundary
 
     # low tunnel: only row 25 is free, 16px, so it has to be slid through

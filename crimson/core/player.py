@@ -294,10 +294,10 @@ class Player:
         self.vy = -(T["jump_vel"] if vy is None else vy)
         if vx is not None:
             self.vx = vx
-        self.buffer_t = 0.0
-        self.coyote_t = 0.0
+        self.buffer_t = 1.0
+        self.coyote_t = 1.0
         self.set_state("jump")
-        self.fx.dust(self.x, self.y, 6)
+        self.fx.dust(self.x, self.y, 8)
 
     # ------------------------------------------------------------ ledges
     def _try_ledge(self, inp):
